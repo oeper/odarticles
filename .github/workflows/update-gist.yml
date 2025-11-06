@@ -1,21 +1,29 @@
-name: Inject GitHub Token
+name: Deploy Article Hub
 on:
   push:
     branches: [main]
 
 jobs:
-  patch:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Inject token
+      # 🧩 Inject GitHub token safely (only for deployment build)
+      - name: Inject GitHub Token
         run: |
-          sed -i "s|window.GITHUB_TOKEN |||window.GITHUB_TOKEN = '${{ secrets.DASASDASD }}'|" index.html
+          cp index.html index.html.bak
+          sed -i "s|window.GITHUB_TOKEN || \"\"|window.GITHUB_TOKEN || '${{ secrets.DASASDASD }}'|" index.html
 
+      # 🚀 Deploy to GitHub Pages
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
+
+      # 🧹 Restore original file so the secret never gets committed
+      - name: Restore index.html
+        run: mv index.html.bak index.html
