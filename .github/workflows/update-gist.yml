@@ -6,25 +6,21 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ Checkout your repository
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Inject GitHub Token (temporary)
       - name: Inject GitHub Token
+        shell: bash
         run: |
           cp index.html index.html.bak
-          sed -i "s|window.GITHUB_TOKEN || \"\"|window.GITHUB_TOKEN || '${{ secrets.DASASDASD }}'|" index.html
+          sed -i 's|window.GITHUB_TOKEN || ""|window.GITHUB_TOKEN || "${{ secrets.DASASDASD }}"|' index.html
 
-      # 3️⃣ Deploy to GitHub Pages
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
 
-      # 4️⃣ Restore original file so token never gets committed
-      - name: Restore index.html
+      - name: Restore original
         run: mv index.html.bak index.html
