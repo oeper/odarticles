@@ -1,20 +1,20 @@
-name: Deploy to GitHub Pages (with Secret Token)
+name: Inject GitHub Token
 on:
   push:
     branches: [main]
 
 jobs:
-  build:
+  patch:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Inject GitHub Token
+      - name: Inject token
         run: |
           sed -i "s|window.GITHUB_TOKEN |||window.GITHUB_TOKEN = '${{ secrets.DASASDASD }}'|" index.html
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
