@@ -1,0 +1,25 @@
+name: Update Gist
+
+on:
+  workflow_dispatch:
+    inputs:
+      gist_id:
+        description: "The ID of the gist to update"
+        required: true
+      content:
+        description: "The new JSON content"
+        required: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Gist with provided content
+        env:
+          GITHUB_TOKEN: ${{ secrets.dasasdasd }}
+        run: |
+          curl -X PATCH \
+            -H "Authorization: token $dasasdasd" \
+            -H "Content-Type: application/json" \
+            -d "{\"files\": {\"articles.json\": {\"content\": \"${{ github.event.inputs.content }}\"}}}" \
+            https://api.github.com/gists/${{ github.event.inputs.gist_id }}
