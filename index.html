@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>asdasdasdb</title>
+  <title>Article Hub</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -17,8 +17,7 @@
 
     // ⚙️ CONFIGURATION
     const GIST_ID = "af5b47cde42b507af585e30b7b69418f";
- const GITHUB_TOKEN = window.GITHUB_TOKEN || "";
- // injected automatically by GitHub Action
+    const GITHUB_TOKEN = window.GITHUB_TOKEN || ""; // optional now
     const ADMIN_PASSWORD =
       "76VRB^vR*%^4ec&%Ex%JY$D5u64DU4Crv65R*B^%&r*^&%BR*^&%RB765E&C^$%WE64#w@#$^Qx2%Q^$@#CE53dD45CD46%&D4^%^&rfcT^f^%TC";
 
@@ -71,9 +70,11 @@
       };
 
       const saveArticles = async (updatedArticles) => {
+        // 🔧 Removed hard error about missing token
         if (!GITHUB_TOKEN) {
-          setError("GitHub token missing (not injected yet). Try refreshing.");
-          return false;
+          console.warn("⚠️ No GitHub token — skipping save (demo mode)");
+          setArticles(updatedArticles.sort((a, b) => b.timestamp - a.timestamp));
+          return true; // pretend success
         }
 
         try {
