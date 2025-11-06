@@ -8,22 +8,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout your repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 🧩 Inject GitHub token safely (only for deployment build)
+      # 2️⃣ Inject GitHub Token (temporary)
       - name: Inject GitHub Token
         run: |
           cp index.html index.html.bak
           sed -i "s|window.GITHUB_TOKEN || \"\"|window.GITHUB_TOKEN || '${{ secrets.DASASDASD }}'|" index.html
 
-      # 🚀 Deploy to GitHub Pages
+      # 3️⃣ Deploy to GitHub Pages
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
 
-      # 🧹 Restore original file so the secret never gets committed
+      # 4️⃣ Restore original file so token never gets committed
       - name: Restore index.html
         run: mv index.html.bak index.html
