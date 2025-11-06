@@ -6,21 +6,25 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
+      # 🧩 Inject token safely
       - name: Inject GitHub Token
         shell: bash
         run: |
           cp index.html index.html.bak
-          sed -i 's|window.GITHUB_TOKEN || ""|window.GITHUB_TOKEN || "${{ secrets.DASASDASD }}"|' index.html
+          sed -i 's|window\.GITHUB_TOKEN || ""|window.GITHUB_TOKEN || "'"${{ secrets.DASASDASD }}"'"|' index.html
 
-      - name: Deploy to GitHub Pages
+      # 🚀 Deploy to GitHub Pages
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
 
-      - name: Restore original
+      # 🧹 Restore original file
+      - name: Restore index.html
         run: mv index.html.bak index.html
