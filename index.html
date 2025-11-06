@@ -3,11 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Article Hub</title>
+  <title>oeper dev articles</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
 </head>
 <body>
   <div id="root"></div>
@@ -16,9 +21,10 @@
     const { useState, useEffect } = React;
     
     // ⚠️ CONFIGURATION - Set these values
-    const GIST_ID = 'af5b47cde42b507af585e30b7b69418f';  // Your Gist ID
-    const GITHUB_TOKEN = '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';  // ADD YOUR NEW TOKEN HERE (create a new one first!)
-    const ADMIN_PASSWORD = 'admin123';  // Password for delete functionality
+    const GIST_ID = 'af5b47cde42b507af585e30b7b69418f';
+    const GITHUB_TOKEN = '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';  // ADD YOUR TOKEN HERE
+    const ADMIN_PASSWORD = '76VRB^vR*%^4ec&%Ex%JY$D5u64DU4Crv65R*B^%&r*^&%BR*^&%RB765E&C^$%WE64#w@#$^Qx2%Q^$@#CE53dD45CD46%&D4^%^&rfcT^f^%TC';
+    const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1129790652524265493/t5i3QsqPveesiaBIhvrpk7I3R1uWMy_QlXVC5RHAA376ki2bjdwPT6XD6eEgIoj7SZQ_';  // ADD YOUR DISCORD WEBHOOK URL HERE
     
     // Icons
     const Plus = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
@@ -26,7 +32,13 @@
     const Edit3 = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>;
     const Trash2 = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
     const Image = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>;
-    const Lock = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;
+    const Search = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
+    const Upload = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>;
+    const Flag = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>;
+    const Tag = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>;
+    const X = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+    const Moon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>;
+    const Sun = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>;
 
     // Markdown parser
     const parseMarkdown = (md) => {
@@ -36,10 +48,10 @@
       html = html.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-8 mb-4">$1</h1>');
       html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>');
       html = html.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
-      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>');
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 dark:text-blue-400 hover:underline">$1</a>');
       html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded-lg my-4" />');
-      html = html.replace(/```([^`]+)```/g, '<pre class="bg-gray-100 p-3 rounded my-3 overflow-x-auto"><code>$1</code></pre>');
-      html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm">$1</code>');
+      html = html.replace(/```([^`]+)```/g, '<pre class="bg-gray-100 dark:bg-gray-800 p-3 rounded my-3 overflow-x-auto"><code>$1</code></pre>');
+      html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm">$1</code>');
       html = html.replace(/\n\n/g, '</p><p class="mb-3">');
       html = html.replace(/\n/g, '<br />');
       return '<p class="mb-3">' + html + '</p>';
@@ -54,16 +66,42 @@
         title: '',
         author: '',
         content: '',
-        coverImage: ''
+        coverImage: '',
+        tags: [],
+        attachments: []
       });
+      const [tagInput, setTagInput] = useState('');
       const [loading, setLoading] = useState(true);
       const [error, setError] = useState('');
       const [deletePassword, setDeletePassword] = useState('');
       const [showDeletePrompt, setShowDeletePrompt] = useState(null);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedTag, setSelectedTag] = useState(null);
+      const [showReportModal, setShowReportModal] = useState(null);
+      const [reportReason, setReportReason] = useState('');
+      const [uploading, setUploading] = useState(false);
+      const [darkMode, setDarkMode] = useState(false);
 
       useEffect(() => {
+        // Check for saved dark mode preference
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+        setDarkMode(savedDarkMode);
+        if (savedDarkMode) {
+          document.documentElement.classList.add('dark');
+        }
         loadArticles();
       }, []);
+
+      const toggleDarkMode = () => {
+        const newDarkMode = !darkMode;
+        setDarkMode(newDarkMode);
+        localStorage.setItem('darkMode', newDarkMode);
+        if (newDarkMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      };
 
       const loadArticles = async () => {
         setLoading(true);
@@ -118,12 +156,69 @@
             throw new Error('Failed to save articles');
           }
 
-          setArticles(updatedArticles.sort((a, b) => b.timestamp - a.timestamps));
+          setArticles(updatedArticles.sort((a, b) => b.timestamp - a.timestamp));
           return true;
         } catch (err) {
           setError(err.message);
           return false;
         }
+      };
+
+      const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File too large. Maximum size is 5MB.');
+          return;
+        }
+
+        setUploading(true);
+        try {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const base64 = event.target.result;
+            const newAttachment = {
+              name: file.name,
+              type: file.type,
+              data: base64,
+              size: file.size
+            };
+            setFormData({
+              ...formData,
+              attachments: [...formData.attachments, newAttachment]
+            });
+            setUploading(false);
+          };
+          reader.readAsDataURL(file);
+        } catch (err) {
+          alert('Failed to upload file');
+          setUploading(false);
+        }
+      };
+
+      const removeAttachment = (index) => {
+        setFormData({
+          ...formData,
+          attachments: formData.attachments.filter((_, i) => i !== index)
+        });
+      };
+
+      const addTag = () => {
+        if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
+          setFormData({
+            ...formData,
+            tags: [...formData.tags, tagInput.trim()]
+          });
+          setTagInput('');
+        }
+      };
+
+      const removeTag = (tag) => {
+        setFormData({
+          ...formData,
+          tags: formData.tags.filter(t => t !== tag)
+        });
       };
 
       const handleSubmit = async () => {
@@ -147,9 +242,46 @@
 
         const success = await saveArticles(updatedArticles);
         if (success) {
-          setFormData({ title: '', author: '', content: '', coverImage: '' });
+          setFormData({ title: '', author: '', content: '', coverImage: '', tags: [], attachments: [] });
           setEditingId(null);
           setView('list');
+        }
+      };
+
+      const handleReport = async (article) => {
+        if (!reportReason.trim()) {
+          alert('Please provide a reason for reporting');
+          return;
+        }
+
+        if (!DISCORD_WEBHOOK) {
+          alert('Discord webhook not configured. Reports cannot be sent.');
+          return;
+        }
+
+        try {
+          await fetch(DISCORD_WEBHOOK, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              embeds: [{
+                title: '🚨 Article Reported',
+                color: 15158332,
+                fields: [
+                  { name: 'Article Title', value: article.title },
+                  { name: 'Author', value: article.author },
+                  { name: 'Article ID', value: article.id },
+                  { name: 'Reason', value: reportReason },
+                  { name: 'Reported At', value: new Date().toLocaleString() }
+                ]
+              }]
+            })
+          });
+          alert('Report sent successfully!');
+          setShowReportModal(null);
+          setReportReason('');
+        } catch (err) {
+          alert('Failed to send report');
         }
       };
 
@@ -180,7 +312,9 @@
           title: article.title,
           author: article.author,
           content: article.content,
-          coverImage: article.coverImage
+          coverImage: article.coverImage,
+          tags: article.tags || [],
+          attachments: article.attachments || []
         });
         setEditingId(article.id);
         setView('create');
@@ -191,49 +325,106 @@
         setView('view');
       };
 
+      const filteredArticles = articles.filter(article => {
+        const matchesSearch = !searchQuery || 
+          article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          article.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          article.content.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        const matchesTag = !selectedTag || (article.tags && article.tags.includes(selectedTag));
+        
+        return matchesSearch && matchesTag;
+      });
+
+      const allTags = [...new Set(articles.flatMap(a => a.tags || []))];
+
       if (loading) {
         return (
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-            <div className="text-lg text-gray-600">Loading articles...</div>
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+            <div className="text-lg text-gray-600 dark:text-gray-300">Loading articles...</div>
           </div>
         );
       }
 
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
           <div className="max-w-5xl mx-auto p-6">
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Article Hub</h1>
-              <p className="text-gray-600">Share your thoughts with the world</p>
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">oeper dev articles</h1>
+                <p className="text-gray-600 dark:text-gray-400">Share your articles with the world</p>
+              </div>
+              <button
+                onClick={toggleDarkMode}
+                className="p-3 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? <Sun /> : <Moon />}
+              </button>
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-red-800">{error}</p>
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
               </div>
             )}
 
             {view === 'list' && (
               <div>
-                <div className="mb-6">
+                <div className="mb-6 flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={() => setView('create')}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
+                    className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center justify-center gap-2 transition-colors"
                   >
                     <Plus />
                     New Article
                   </button>
+                  
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search articles..."
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    />
+                  </div>
                 </div>
 
-                {articles.length === 0 ? (
-                  <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-                    <p className="text-gray-500 text-lg mb-4">No articles yet</p>
-                    <p className="text-gray-400">Be the first to create an article!</p>
+                {allTags.length > 0 && (
+                  <div className="mb-6 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSelectedTag(null)}
+                      className={`px-3 py-1 rounded-full text-sm transition-colors ${!selectedTag ? 'bg-blue-600 dark:bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                    >
+                      All
+                    </button>
+                    {allTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => setSelectedTag(tag)}
+                        className={`px-3 py-1 rounded-full text-sm transition-colors ${selectedTag === tag ? 'bg-blue-600 dark:bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {filteredArticles.length === 0 ? (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+                    <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
+                      {searchQuery || selectedTag ? 'No articles found' : 'No articles yet'}
+                    </p>
+                    <p className="text-gray-400 dark:text-gray-500">
+                      {searchQuery || selectedTag ? 'Try a different search or filter' : 'Be the first to create an article!'}
+                    </p>
                   </div>
                 ) : (
                   <div className="grid gap-6">
-                    {articles.map((article) => (
-                      <div key={article.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                    {filteredArticles.map((article) => (
+                      <div key={article.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                         {article.coverImage && (
                           <img 
                             src={article.coverImage} 
@@ -242,33 +433,57 @@
                           />
                         )}
                         <div className="p-6">
-                          <h2 className="text-2xl font-bold text-gray-900 mb-2">{article.title}</h2>
-                          <div className="flex items-center text-sm text-gray-500 mb-4">
+                          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{article.title}</h2>
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
                             <span>By {article.author}</span>
                             <span className="mx-2">•</span>
                             <span>{new Date(article.timestamp).toLocaleDateString()}</span>
                           </div>
-                          <p className="text-gray-600 mb-4">
+                          
+                          {article.tags && article.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {article.tags.map(tag => (
+                                <span key={tag} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded text-xs">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {article.attachments && article.attachments.length > 0 && (
+                            <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                              📎 {article.attachments.length} attachment(s)
+                            </div>
+                          )}
+
+                          <p className="text-gray-600 dark:text-gray-300 mb-4">
                             {article.content.substring(0, 150)}...
                           </p>
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <button
                               onClick={() => viewArticle(article)}
-                              className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                             >
                               <Eye />
                               Read
                             </button>
                             <button
                               onClick={() => handleEdit(article)}
-                              className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                             >
                               <Edit3 />
                               Edit
                             </button>
                             <button
+                              onClick={() => setShowReportModal(article)}
+                              className="flex items-center gap-2 px-4 py-2 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/50 transition-colors"
+                            >
+                              <Flag />
+                              Report
+                            </button>
+                            <button
                               onClick={() => handleDeleteRequest(article.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                             >
                               <Trash2 />
                               Delete
@@ -276,8 +491,8 @@
                           </div>
 
                           {showDeletePrompt === article.id && (
-                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                              <p className="text-sm text-red-800 mb-2 font-medium">Enter admin password to delete:</p>
+                            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                              <p className="text-sm text-red-800 dark:text-red-200 mb-2 font-medium">Enter admin password to delete:</p>
                               <div className="flex gap-2">
                                 <input
                                   type="password"
@@ -285,17 +500,17 @@
                                   onChange={(e) => setDeletePassword(e.target.value)}
                                   onKeyPress={(e) => e.key === 'Enter' && handleDeleteConfirm(article.id)}
                                   placeholder="Password"
-                                  className="flex-1 px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm"
+                                  className="flex-1 px-3 py-2 border border-red-300 dark:border-red-700 rounded-lg focus:ring-2 focus:ring-red-500 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                 />
                                 <button
                                   onClick={() => handleDeleteConfirm(article.id)}
-                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                                  className="px-4 py-2 bg-red-600 dark:bg-red-500 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-600 text-sm"
                                 >
                                   Confirm
                                 </button>
                                 <button
                                   onClick={() => setShowDeletePrompt(null)}
-                                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
+                                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-sm"
                                 >
                                   Cancel
                                 </button>
@@ -311,37 +526,48 @@
             )}
 
             {view === 'create' && (
-              <div className="bg-white rounded-xl shadow-sm p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   {editingId ? 'Edit Article' : 'Create New Article'}
                 </h2>
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Title <span className="text-red-500">*</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Tag />
+                      Tags
                     </label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({...formData, title: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                        placeholder="Add a tag..."
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      />
+                      <button
+                        onClick={addTag}
+                        className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {formData.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.tags.map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-sm flex items-center gap-2">
+                            {tag}
+                            <button onClick={() => removeTag(tag)} className="hover:text-blue-900 dark:hover:text-blue-100">
+                              <X />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Author <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.author}
-                      onChange={(e) => setFormData({...formData, author: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                       <Image />
                       Cover Image URL (optional)
                     </label>
@@ -350,22 +576,51 @@
                       value={formData.coverImage}
                       onChange={(e) => setFormData({...formData, coverImage: e.target.value})}
                       placeholder="https://example.com/image.jpg"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Upload />
+                      File Attachments (max 5MB each)
+                    </label>
+                    <input
+                      type="file"
+                      onChange={handleFileUpload}
+                      disabled={uploading}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                    {uploading && <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Uploading...</p>}
+                    {formData.attachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {formData.attachments.map((att, i) => (
+                          <div key={i} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">📎 {att.name}</span>
+                            <button
+                              onClick={() => removeAttachment(i)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                            >
+                              <X />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Content (Markdown) <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       value={formData.content}
                       onChange={(e) => setFormData({...formData, content: e.target.value})}
                       rows={15}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                       placeholder="# Heading 1&#10;## Heading 2&#10;&#10;**Bold** and *italic*&#10;&#10;![Image](url)&#10;[Link](url)"
                     />
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                       Supports: Headers (#), Bold (**), Italic (*), Links, Images, Code
                     </p>
                   </div>
@@ -373,17 +628,17 @@
                   <div className="flex gap-3">
                     <button
                       onClick={handleSubmit}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600"
                     >
                       {editingId ? 'Update Article' : 'Publish Article'}
                     </button>
                     <button
                       onClick={() => {
-                        setFormData({ title: '', author: '', content: '', coverImage: '' });
+                        setFormData({ title: '', author: '', content: '', coverImage: '', tags: [], attachments: [] });
                         setEditingId(null);
                         setView('list');
                       }}
-                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
                     >
                       Cancel
                     </button>
@@ -396,12 +651,12 @@
               <div>
                 <button
                   onClick={() => setView('list')}
-                  className="mb-6 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  className="mb-6 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
                 >
                   ← Back to Articles
                 </button>
                 
-                <article className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <article className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                   {currentArticle.coverImage && (
                     <img 
                       src={currentArticle.coverImage} 
@@ -410,8 +665,8 @@
                     />
                   )}
                   <div className="p-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">{currentArticle.title}</h1>
-                    <div className="flex items-center text-gray-600 mb-8 pb-8 border-b">
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{currentArticle.title}</h1>
+                    <div className="flex items-center text-gray-600 dark:text-gray-400 mb-4">
                       <span className="font-medium">{currentArticle.author}</span>
                       <span className="mx-3">•</span>
                       <span>{new Date(currentArticle.timestamp).toLocaleDateString('en-US', {
@@ -420,12 +675,78 @@
                         day: 'numeric'
                       })}</span>
                     </div>
-                    <div 
-                      className="prose prose-lg max-w-none text-gray-800"
-                      dangerouslySetInnerHTML={{ __html: parseMarkdown(currentArticle.content) }}
-                    />
+
+                    {currentArticle.tags && currentArticle.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {currentArticle.tags.map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {currentArticle.attachments && currentArticle.attachments.length > 0 && (
+                      <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Attachments:</h3>
+                        <div className="space-y-2">
+                          {currentArticle.attachments.map((att, i) => (
+                            <a
+                              key={i}
+                              href={att.data}
+                              download={att.name}
+                              className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              📎 {att.name} ({Math.round(att.size / 1024)}KB)
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="border-t dark:border-gray-700 pt-6">
+                      <div 
+                        className="prose prose-lg dark:prose-invert max-w-none text-gray-800 dark:text-gray-200"
+                        dangerouslySetInnerHTML={{ __html: parseMarkdown(currentArticle.content) }}
+                      />
+                    </div>
                   </div>
                 </article>
+              </div>
+            )}
+
+            {showReportModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Report Article</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Reporting: <strong className="text-gray-900 dark:text-white">{showReportModal.title}</strong>
+                  </p>
+                  <textarea
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    placeholder="Please explain why you're reporting this article..."
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleReport(showReportModal)}
+                      className="flex-1 px-4 py-2 bg-red-600 dark:bg-red-500 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-600"
+                    >
+                      Submit Report
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowReportModal(null);
+                        setReportReason('');
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -436,4 +757,28 @@
     ReactDOM.render(<ArticlePlatform />, document.getElementById('root'));
   </script>
 </body>
-</html>
+</html>sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Author <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.author}
+                      onChange={(e) => setFormData({...formData, author: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-
