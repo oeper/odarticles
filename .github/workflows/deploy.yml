@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -15,18 +15,27 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
       
       - name: Inject secrets into HTML
+        env:
+          GIST_TOKEN: ${{ secrets.DASASDASD }}
+          ADMIN_PASS: ${{ secrets.ADMIN_PASSWORD }}
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          sed -i "s|const GITHUB_TOKEN = '';|const GITHUB_TOKEN = '${{ secrets.DASASDASD }}';|g" index.html
-          sed -i "s|const ADMIN_PASSWORD = 'your-secure-password';|const ADMIN_PASSWORD = '${{ secrets.ADMIN_PASSWORD }}';|g" index.html
-          sed -i "s|const DISCORD_WEBHOOK = '';|const DISCORD_WEBHOOK = '${{ secrets.DISCORD_WEBHOOK }}';|g" index.html
+          sed -i "s/const GITHUB_TOKEN = '';/const GITHUB_TOKEN = '${GIST_TOKEN}';/g" index.html
+          sed -i "s/const ADMIN_PASSWORD = 'your-secure-password';/const ADMIN_PASSWORD = '${ADMIN_PASS}';/g" index.html
+          sed -i "s|const DISCORD_WEBHOOK = '';|const DISCORD_WEBHOOK = '${WEBHOOK_URL}';|g" index.html
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '.'
       
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          publish_branch: gh-pages
+        id: deployment
+        uses: actions/deploy-pages@v2
