@@ -1,27 +1,20 @@
-name: Deploy Article Hub
+name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
 
+permissions:
+  contents: write  # 👈 required for gh-pages push
+
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Inject GitHub Token
-        run: |
-          cp index.html index.html.bak
-          echo "Replacing token..."
-          TOKEN="${{ secrets.DASASDASD }}"
-          # Use a safer replace (no sed)
-          awk -v t="$TOKEN" '{gsub(/\$\{GITHUB_TOKEN\}/, t)}1' index.html.bak > index.html
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
-
-      - name: Restore file
-        run: mv index.html.bak index.html
