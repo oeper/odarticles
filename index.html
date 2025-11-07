@@ -9,20 +9,22 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50">
   <div id="root"></div>
-
-  <!-- ✅ Load your token safely from a local file -->
-  <script src="token.js"></script>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
 
+    // ⚙️ CONFIGURATION
     const GIST_ID = "af5b47cde42b507af585e30b7b69418f";
-    const GITHUB_TOKEN = window.GITHUB_TOKEN || "";
     const ADMIN_PASSWORD =
       "76VRB^vR*%^4ec&%Ex%JY$D5u64DU4Crv65R*B^%&r*^&%BR*^&%RB765E&C^$%WE64#w@#$^Qx2%Q^$@#CE53dD45CD46%&D4^%^&rfcT^f^%TC";
 
+    // 🧠 Load GitHub token from browser
+    window.GITHUB_TOKEN = localStorage.getItem("GITHUB_TOKEN") || "";
+    const GITHUB_TOKEN = window.GITHUB_TOKEN;
+
+    // Simple Markdown parser
     const parseMarkdown = (md) => {
       let html = md;
       html = html.replace(/^### (.*$)/gim, "<h3 class='text-xl font-semibold mt-4 mb-2'>$1</h3>");
@@ -47,6 +49,8 @@
       const [error, setError] = useState("");
       const [deletePassword, setDeletePassword] = useState("");
       const [showDeletePrompt, setShowDeletePrompt] = useState(null);
+      const [showAdminMenu, setShowAdminMenu] = useState(false);
+      const [tempToken, setTempToken] = useState("");
 
       useEffect(() => {
         loadArticles();
@@ -72,7 +76,7 @@
 
       const saveArticles = async (updatedArticles) => {
         if (!GITHUB_TOKEN) {
-          console.warn("⚠️ No GitHub token — changes won't save.");
+          setError("⚠️ GitHub token missing. Click ⚙️ and add it.");
           return false;
         }
 
@@ -136,6 +140,11 @@
         }
       };
 
+      const handleSaveToken = () => {
+        localStorage.setItem("GITHUB_TOKEN", tempToken);
+        window.location.reload();
+      };
+
       const ArticleCard = ({ article }) => (
         <div className="bg-white shadow-sm rounded-xl overflow-hidden hover:shadow-md transition">
           {article.coverImage && <img src={article.coverImage} className="w-full h-48 object-cover" />}
@@ -166,7 +175,31 @@
       );
 
       return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen relative">
+          <div className="absolute top-4 right-4">
+            <button
+              onClick={() => setShowAdminMenu(!showAdminMenu)}
+              className="bg-gray-800 text-white px-3 py-2 rounded-lg hover:bg-gray-700"
+            >
+              ⚙️ Admin
+            </button>
+          </div>
+
+          {showAdminMenu && (
+            <div className="absolute top-16 right-4 bg-white shadow-lg p-4 rounded-lg border w-80">
+              <h3 className="font-bold mb-2">GitHub Token</h3>
+              <input
+                type="password"
+                placeholder="Enter token..."
+                value={tempToken}
+                onChange={(e) => setTempToken(e.target.value)}
+                className="w-full border px-2 py-1 rounded mb-2"
+              />
+              <button onClick={handleSaveToken} className="bg-blue-600 text-white px-3 py-1 rounded w-full">Save</button>
+              <p className="text-xs text-gray-500 mt-2">Stored locally in browser. Never shared publicly.</p>
+            </div>
+          )}
+
           <div className="max-w-5xl mx-auto p-6">
             <h1 className="text-4xl font-bold mb-4">📰 Article Hub</h1>
 
