@@ -1,0 +1,27 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # or master, depending on your branch name
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Inject secrets into HTML
+        run: |
+          sed -i "s|const GITHUB_TOKEN = '';|const GITHUB_TOKEN = '${{ secrets.DASASDASD }}';|g" index.html
+          sed -i "s|const ADMIN_PASSWORD = 'your-secure-password';|const ADMIN_PASSWORD = '${{ secrets.ADMIN_PASSWORD }}';|g" index.html
+          sed -i "s|const DISCORD_WEBHOOK = '';|const DISCORD_WEBHOOK = '${{ secrets.DISCORD_WEBHOOK }}';|g" index.html
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
