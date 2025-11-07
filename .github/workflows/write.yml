@@ -1,0 +1,33 @@
+name: Gist Writer
+on:
+  repository_dispatch:
+    types: [update-gist]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update Gist
+        run: |
+          echo "Received payload:"
+          echo '${{ github.event.client_payload.json }}' > data.json
+          node -e "
+          const fs = require('fs');
+          const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+          const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
+          const gistId = data.gist_id;
+          const articles = data.articles;
+          fetch(\`https://api.github.com/gists/\${gistId}\`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': 'token ${{ secrets.WRITER_TOKEN }}',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              files: { 'articles.json': { content: JSON.stringify(articles, null, 2) } }
+            })
+          }).then(r => r.text()).then(console.log).catch(console.error);
+          "
