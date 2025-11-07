@@ -1,640 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ODArticles — Articles + Replies + Reactions</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ODArticles</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-900">
-
-  <!-- Header -->
   <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
-    <div class="flex items-center gap-3">
-      <h1 class="text-xl font-bold">ODArticles</h1>
-      <span class="text-sm opacity-80">Articles • Replies • Reactions</span>
-    </div>
-    <div class="flex items-center gap-2">
-      <button id="tokenButton" class="bg-blue-800 px-3 py-1 rounded">🔑 Token</button>
-      <button id="clearLocal" title="Clear local token & reaction state" class="bg-blue-800 px-3 py-1 rounded opacity-90 hover:opacity-100">🧹 Clear</button>
-    </div>
+    <h1 class="text-xl font-bold">ODArticles</h1>
+    <button onclick="loadArticles()" class="bg-blue-800 px-3 py-1 rounded">🔄 Refresh</button>
   </header>
 
-  <!-- Main -->
-  <main class="max-w-5xl mx-auto mt-8 p-4">
-    <section class="mb-6 bg-white p-4 rounded shadow">
-      <h2 class="font-semibold mb-3">Create / Edit Article</h2>
+  <main class="max-w-4xl mx-auto mt-8 p-4 bg-white shadow rounded">
+    <h2 class="text-lg font-semibold mb-4">📝 Create New Article</h2>
+    <div class="space-y-3">
+      <input id="title" type="text" placeholder="Title" class="border p-2 rounded w-full" />
+      <textarea id="content" placeholder="Content..." class="border p-2 rounded w-full h-32"></textarea>
+      <input id="author" type="text" placeholder="Author" class="border p-2 rounded w-full" />
+      <input id="cover" type="url" placeholder="Cover Image URL (optional)" class="border p-2 rounded w-full" />
 
-      <div class="space-y-3">
-        <input id="title" type="text" placeholder="Title" class="border p-2 rounded w-full" />
-        <input id="author" type="text" placeholder="Author" class="border p-2 rounded w-full" />
-        <textarea id="content" placeholder="Content (Markdown supported)" class="border p-2 rounded w-full h-32"></textarea>
-
-        <!-- File URL + Upload -->
-        <div>
-          <input id="fileURL" type="url" placeholder="File URL (optional) — will be added to the article" class="border p-2 rounded w-full mb-2" />
-          <label class="block mb-1 font-semibold">Upload file (≤ 50 MB)</label>
-          <input id="uploadFile" type="file" class="border p-2 rounded w-full" />
-          <p id="uploadStatus" class="text-sm text-gray-500 mt-1"></p>
-        </div>
-
-        <div class="flex gap-3">
-          <button id="saveArticleBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Article</button>
-          <button id="cancelArticleBtn" class="bg-gray-200 px-4 py-2 rounded">Cancel</button>
-        </div>
-        <p id="formMsg" class="text-sm text-red-600"></p>
+      <div>
+        <label class="block mb-1 font-semibold">Upload File (≤ 50 MB)</label>
+        <input type="file" id="uploadFile" class="border p-2 rounded w-full" onchange="handleUpload(event)" />
+        <p id="uploadStatus" class="text-sm text-gray-500 mt-1"></p>
       </div>
-    </section>
 
-    <section id="articlesContainer" class="space-y-4">
-      <!-- Articles will be rendered here -->
-    </section>
+      <button onclick="createArticle()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Publish Article
+      </button>
+    </div>
   </main>
 
+  <section id="articles" class="max-w-4xl mx-auto mt-8 space-y-6 p-4"></section>
+
   <script>
-  /* ----------------- CONFIG ----------------- */
-  const GIST_ID = "af5b47cde42b507af585e30b7b69418f";
-  const CLOUD_NAME = "dsjaa8rko";
-  const UPLOAD_PRESET = "asd";
-  const ADMIN_PASSWORD = "76VRB^vR*%^4ec&%Ex%JY$D5u64DU4Crv65R*B^%&r*^&%BR*^&%RB765E&C^$%WE64#w@#$^Qx2%Q^$@#CE53dD45CD46%&D4^%^&rfcT^f^%TC";
+    const CLOUD_NAME = "dsjaa8rko";
+    const UPLOAD_PRESET = "asd";
+    const GIST_ID = "af5b47cde42b507af585e30b7b69418f";
+    const REPO = "oeper/odarticles";
+    const MAX_SIZE = 50 * 1024 * 1024;
 
-  /* ----------------- Helpers ----------------- */
+    let articles = [];
 
-  // read token from localStorage
-  function getToken() {
-    return localStorage.getItem("github_token") || "";
-  }
-  function setToken(t) {
-    if (t) localStorage.setItem("github_token", t);
-    else localStorage.removeItem("github_token");
-  }
+    async function handleUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > MAX_SIZE) {
+        alert("File too large (max 50 MB)");
+        return;
+      }
 
-  // unique ID helpers
-  function idNow(prefix) {
-    return `${prefix}_${Date.now()}_${Math.floor(Math.random()*1000)}`;
-  }
+      const status = document.getElementById("uploadStatus");
+      status.textContent = "Uploading...";
 
-  // simple markdown to html (small subset)
-  function parseMarkdown(md) {
-    let html = md || "";
-    html = html.replace(/^### (.*$)/gim, "<h3 class='text-lg font-semibold'>$1</h3>");
-    html = html.replace(/^## (.*$)/gim, "<h2 class='text-xl font-semibold'>$1</h2>");
-    html = html.replace(/^# (.*$)/gim, "<h1 class='text-2xl font-bold'>$1</h1>");
-    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "<a href='$2' class='text-blue-600 hover:underline' target='_blank' rel='noreferrer'>$1</a>");
-    html = html.replace(/\n/g, "<br/>");
-    return html;
-  }
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
 
-  // recursively find reply by id (and return reference)
-  function findReplyById(replies, id) {
-    for (let r of replies) {
-      if (r.id === id) return r;
-      if (r.replies && r.replies.length) {
-        const found = findReplyById(r.replies, id);
-        if (found) return found;
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+          method: "POST",
+          body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          document.getElementById("cover").value = data.secure_url;
+          status.textContent = "✅ Upload successful!";
+        } else status.textContent = "❌ Upload failed.";
+      } catch {
+        status.textContent = "❌ Upload error.";
       }
     }
-    return null;
-  }
 
-  // recursively find article
-  function findArticleById(articles, id) {
-    return articles.find(a => a.id === id) || null;
-  }
-
-  // reaction state per-user: stored in localStorage as object { "<replyId>::<emoji>": true }
-  function getReactionKey(replyId, emoji) {
-    return `${replyId}::${emoji}`;
-  }
-  function userHasReacted(replyId, emoji) {
-    return !!localStorage.getItem(getReactionKey(replyId, emoji));
-  }
-  function setUserReacted(replyId, emoji, val) {
-    if (val) localStorage.setItem(getReactionKey(replyId, emoji), "1");
-    else localStorage.removeItem(getReactionKey(replyId, emoji));
-  }
-
-  /* ----------------- Persistence (Gist) ----------------- */
-
-  async function loadArticles() {
-    const container = document.getElementById("articlesContainer");
-    container.innerHTML = `<div class="p-6 bg-white rounded shadow text-gray-600">Loading articles...</div>`;
-    try {
-      const res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-      if (!res.ok) throw new Error(`Failed to load gist: ${res.status} ${res.statusText}`);
-      const gist = await res.json();
-      const file = gist.files["articles.json"];
-      const data = file ? JSON.parse(file.content) : [];
-      renderArticles(data);
-      return data;
-    } catch (err) {
-      container.innerHTML = `<div class="p-6 bg-red-100 rounded shadow text-red-700">Error loading articles: ${err.message}</div>`;
-      console.error(err);
-      return [];
-    }
-  }
-
-  async function saveArticles(articles) {
-    const token = getToken();
-    if (!token) {
-      alert("GitHub token missing. Click the 🔑 Token button and paste your token.");
-      return false;
-    }
-
-    try {
-      const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `token ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          files: {
-            "articles.json": {
-              content: JSON.stringify(articles, null, 2)
-            }
-          }
-        })
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Save failed: ${res.status} ${res.statusText} - ${txt}`);
+    async function loadArticles() {
+      document.getElementById("articles").innerHTML = "<p>Loading...</p>";
+      try {
+        const res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
+        const gist = await res.json();
+        const file = gist.files["articles.json"];
+        articles = file ? JSON.parse(file.content) : [];
+        renderArticles();
+      } catch {
+        document.getElementById("articles").innerHTML = "<p>❌ Failed to load articles.</p>";
       }
-      return true;
-    } catch (err) {
-      alert("Failed to save articles: " + err.message);
-      console.error(err);
-      return false;
-    }
-  }
-
-  /* ----------------- UI Rendering ----------------- */
-
-  // render one reply recursively (level = 0 or 1, limit to 2 levels for clarity)
-  function renderReply(articleId, reply, level = 0) {
-    const container = document.createElement("div");
-    container.className = `p-3 rounded ${level===0 ? 'bg-gray-50' : 'bg-gray-100'} mb-2`;
-
-    // header
-    const header = document.createElement("div");
-    header.className = "flex items-center justify-between text-sm text-gray-600 mb-2 gap-2";
-    header.innerHTML = `<div><strong>${escapeHtml(reply.author)}</strong> • ${new Date(reply.timestamp).toLocaleString()}</div>`;
-    container.appendChild(header);
-
-    // content
-    const content = document.createElement("div");
-    content.className = "text-gray-800 mb-2";
-    content.innerHTML = escapeHtml(reply.content).replace(/\n/g, "<br/>");
-    container.appendChild(content);
-
-    // attachments (if present)
-    if (reply.fileURL) {
-      const a = document.createElement("a");
-      a.href = reply.fileURL;
-      a.target = "_blank";
-      a.rel = "noreferrer";
-      a.className = "text-sm text-blue-600 hover:underline block mb-2";
-      a.textContent = `Attachment: ${reply.fileURL}`;
-      container.appendChild(a);
     }
 
-    // reactions toolbar
-    const emojis = ["👍","❤️","😂","😮","😢","😡"];
-    const reactionBar = document.createElement("div");
-    reactionBar.className = "flex items-center gap-2 mb-2";
-
-    emojis.forEach(em => {
-      const key = getReactionKey(reply.id, em);
-      const reacted = userHasReacted(reply.id, em);
-      const count = (reply.reactions && reply.reactions[em]) ? reply.reactions[em] : 0;
-      const btn = document.createElement("button");
-      btn.className = `text-sm px-2 py-1 rounded ${reacted ? 'bg-blue-600 text-white' : 'bg-gray-200'}`;
-      btn.innerHTML = `${em} ${count || ''}`;
-      btn.addEventListener("click", async () => {
-        // toggle
-        const articles = window._articles || await loadAndCacheArticles();
-        const art = findArticleById(articles, articleId);
-        if (!art) return;
-        const r = findReplyById(art.replies || [], reply.id);
-        if (!r) return;
-
-        // toggle local user reacted
-        const currently = userHasReacted(r.id, em);
-        if (currently) {
-          // decrement
-          if (r.reactions && r.reactions[em]) r.reactions[em] = Math.max(0, r.reactions[em]-1);
-          setUserReacted(r.id, em, false);
-        } else {
-          // increment
-          if (!r.reactions) r.reactions = {};
-          r.reactions[em] = (r.reactions[em] || 0) + 1;
-          setUserReacted(r.id, em, true);
-        }
-
-        const ok = await saveArticles(articles);
-        if (ok) {
-          await loadAndCacheArticles();
-        } else {
-          alert("Failed to save reaction");
-        }
-      });
-      reactionBar.appendChild(btn);
-    });
-
-    container.appendChild(reactionBar);
-
-    // reply / delete controls
-    const controls = document.createElement("div");
-    controls.className = "flex items-center gap-2";
-
-    // reply button (if nested level < 1 allow reply-to-reply only once)
-    if (level < 1) {
-      const replyBtn = document.createElement("button");
-      replyBtn.className = "text-sm px-2 py-1 bg-gray-200 rounded";
-      replyBtn.textContent = "Reply";
-      replyBtn.addEventListener("click", () => showReplyForm(articleId, reply.id, container, level+1));
-      controls.appendChild(replyBtn);
-    }
-
-    // admin delete
-    const delBtn = document.createElement("button");
-    delBtn.className = "text-sm px-2 py-1 bg-red-50 text-red-700 rounded";
-    delBtn.textContent = "Delete";
-    delBtn.addEventListener("click", async () => {
-      const pw = prompt("Admin password to delete reply:");
-      if (pw !== ADMIN_PASSWORD) { alert("Incorrect password"); return; }
-      const articles = window._articles || await loadAndCacheArticles();
-      const art = findArticleById(articles, articleId);
-      if (!art) return;
-      // delete reply by id (recursive)
-      art.replies = deleteReplyById(art.replies || [], reply.id);
-      const ok = await saveArticles(articles);
-      if (ok) loadAndCacheArticles();
-    });
-
-    controls.appendChild(delBtn);
-    container.appendChild(controls);
-
-    return container;
-  }
-
-  function deleteReplyById(replies, id) {
-    return replies.filter(r => {
-      if (r.id === id) return false;
-      if (r.replies && r.replies.length) {
-        r.replies = deleteReplyById(r.replies, id);
+    function renderArticles() {
+      const container = document.getElementById("articles");
+      container.innerHTML = "";
+      if (!articles.length) {
+        container.innerHTML = "<p class='text-gray-500'>No articles yet.</p>";
+        return;
       }
-      return true;
-    });
-  }
 
-  // Escape HTML helper
-  function escapeHtml(str) {
-    if (!str) return "";
-    return str.replace(/[&<>"']/g, function(m) {
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m];
-    });
-  }
+      for (const a of articles.sort((a, b) => b.timestamp - a.timestamp)) {
+        const div = document.createElement("div");
+        div.className = "bg-white p-6 rounded shadow";
+        div.innerHTML = `
+          ${a.coverImage ? `<img src="${a.coverImage}" class="w-full h-64 object-cover rounded mb-4" />` : ""}
+          <h2 class="text-2xl font-bold mb-1">${a.title}</h2>
+          <p class="text-sm text-gray-500 mb-3">By ${a.author} • ${new Date(a.timestamp).toLocaleString()}</p>
+          <p class="mb-4 whitespace-pre-wrap">${a.content}</p>
+          <div id="replies-${a.id}" class="space-y-3 mt-4"></div>
+          <div class="mt-3">
+            <input id="reply-author-${a.id}" placeholder="Your name" class="border p-1 rounded mr-2" />
+            <input id="reply-content-${a.id}" placeholder="Write a reply..." class="border p-1 rounded w-1/2 mr-2" />
+            <button onclick="postReply('${a.id}')" class="bg-blue-600 text-white px-2 py-1 rounded">Reply</button>
+          </div>
+        `;
+        container.appendChild(div);
+        renderReplies(a.id, a.replies || []);
+      }
+    }
 
-  // show reply form below a given container
-  function showReplyForm(articleId, parentReplyId, mountPoint, level) {
-    // remove existing reply forms
-    const existing = document.getElementById(`replyform-${articleId}-${parentReplyId || 'root'}`);
-    if (existing) existing.remove();
+    function renderReplies(articleId, replies, depth = 0) {
+      const container = document.getElementById(`replies-${articleId}`);
+      container.innerHTML = "";
+      for (const r of replies) {
+        const div = document.createElement("div");
+        div.className = `ml-${depth * 4} border-l pl-3`;
+        const reacted = JSON.parse(localStorage.getItem(`reacted-${r.id}`) || "[]");
+        div.innerHTML = `
+          <p><strong>${r.author}</strong> <span class="text-sm text-gray-400">(${new Date(r.timestamp).toLocaleString()})</span></p>
+          <p class="mb-1 whitespace-pre-wrap">${r.content}</p>
+          <div class="flex gap-2 mb-2">
+            ${["👍","❤️","😂","😮","😢","😡"].map(emoji => `
+              <button onclick="reactToReply('${articleId}','${r.id}','${emoji}')" class="${reacted.includes(emoji) ? 'opacity-50' : ''}">
+                ${emoji} ${(r.reactions && r.reactions[emoji]) || 0}
+              </button>`).join("")}
+          </div>
+          ${depth < 1 ? `
+            <div class="mb-3">
+              <input id="subreply-author-${r.id}" placeholder="Your name" class="border p-1 rounded mr-1" />
+              <input id="subreply-content-${r.id}" placeholder="Reply..." class="border p-1 rounded w-1/2 mr-1" />
+              <button onclick="postReply('${articleId}','${r.id}')" class="bg-gray-200 px-2 py-1 rounded">↩</button>
+            </div>` : ""}
+          <div id="replies-${r.id}"></div>
+        `;
+        container.appendChild(div);
+        renderReplies(r.id, r.replies || [], depth + 1);
+      }
+    }
 
-    const form = document.createElement("div");
-    form.id = `replyform-${articleId}-${parentReplyId || 'root'}`;
-    form.className = "p-3 bg-white rounded border mb-2";
+    async function postReply(articleId, parentId = null) {
+      const author = document.getElementById(parentId ? `subreply-author-${parentId}` : `reply-author-${articleId}`).value.trim();
+      const content = document.getElementById(parentId ? `subreply-content-${parentId}` : `reply-content-${articleId}`).value.trim();
+      if (!author || !content) return alert("Name and reply are required.");
 
-    form.innerHTML = `
-      <input placeholder="Your name" class="border p-2 rounded w-full mb-2" id="${form.id}-name"/>
-      <textarea placeholder="Reply..." class="border p-2 rounded w-full mb-2" id="${form.id}-content"></textarea>
-      <input placeholder="Attach file (optional) - upload then paste URL" class="border p-2 rounded w-full mb-2" id="${form.id}-fileurl"/>
-      <div class="flex gap-2">
-        <button id="${form.id}-send" class="bg-blue-600 text-white px-3 py-1 rounded">Send</button>
-        <button id="${form.id}-cancel" class="bg-gray-200 px-3 py-1 rounded">Cancel</button>
-      </div>
-    `;
-
-    mountPoint.appendChild(form);
-
-    document.getElementById(`${form.id}-cancel`).addEventListener("click", () => form.remove());
-    document.getElementById(`${form.id}-send`).addEventListener("click", async () => {
-      const name = document.getElementById(`${form.id}-name`).value.trim() || "Anonymous";
-      const content = document.getElementById(`${form.id}-content`).value.trim();
-      const fileURL = document.getElementById(`${form.id}-fileurl`).value.trim();
-
-      if (!content) { alert("Reply content required"); return; }
-
-      const articles = window._articles || await loadAndCacheArticles();
-      const art = findArticleById(articles, articleId);
-      if (!art) { alert("Article not found"); return; }
-
-      const newReply = {
-        id: idNow("reply"),
-        author: name,
+      const reply = {
+        id: "reply_" + Date.now(),
+        author,
         content,
-        fileURL: fileURL || "",
         timestamp: Date.now(),
         reactions: {},
         replies: []
       };
 
-      if (!art.replies) art.replies = [];
-      if (!parentReplyId) {
-        // top level reply
-        art.replies.unshift(newReply);
+      const article = findArticleById(articleId);
+      if (!article.replies) article.replies = [];
+      if (parentId) {
+        const parent = findReply(article.replies, parentId);
+        parent.replies.push(reply);
       } else {
-        // nested: find parent and push to its replies
-        const parent = findReplyById(art.replies, parentReplyId);
-        if (!parent.replies) parent.replies = [];
-        parent.replies.unshift(newReply);
+        article.replies.push(reply);
       }
-
-      const ok = await saveArticles(articles);
-      if (ok) {
-        form.remove();
-        loadAndCacheArticles();
-      } else {
-        alert("Failed to save reply");
-      }
-    });
-  }
-
-  // render whole articles list
-  function renderArticles(articles) {
-    // cache globally
-    window._articles = articles;
-
-    const container = document.getElementById("articlesContainer");
-    container.innerHTML = "";
-
-    // sort by timestamp desc
-    articles.sort((a,b) => b.timestamp - a.timestamp);
-
-    if (!articles.length) {
-      container.innerHTML = `<div class="p-6 bg-white rounded shadow text-gray-600">No articles yet.</div>`;
-      return;
+      await saveArticles();
+      renderArticles();
     }
 
-    for (const article of articles) {
-      const card = document.createElement("article");
-      card.className = "bg-white rounded shadow p-4";
+    async function reactToReply(articleId, replyId, emoji) {
+      const reactedKey = `reacted-${replyId}`;
+      const reacted = JSON.parse(localStorage.getItem(reactedKey) || "[]");
+      if (reacted.includes(emoji)) return; // already reacted
 
-      // header
-      const header = document.createElement("div");
-      header.className = "flex items-center justify-between mb-3";
-      header.innerHTML = `<div><h3 class="text-xl font-bold">${escapeHtml(article.title)}</h3>
-                          <div class="text-sm text-gray-600">By ${escapeHtml(article.author)} • ${new Date(article.timestamp).toLocaleString()}</div>
-                         </div>`;
-      card.appendChild(header);
+      const article = findArticleById(articleId);
+      const reply = findReply(article.replies, replyId);
+      if (!reply.reactions) reply.reactions = {};
+      reply.reactions[emoji] = (reply.reactions[emoji] || 0) + 1;
 
-      // cover / file link
-      if (article.coverImage) {
-        const img = document.createElement("img");
-        img.src = article.coverImage;
-        img.className = "w-full max-h-72 object-contain rounded mb-3";
-        card.appendChild(img);
-      } else if (article.fileURL) {
-        const a = document.createElement("a");
-        a.href = article.fileURL;
-        a.target = "_blank";
-        a.rel = "noreferrer";
-        a.className = "text-blue-600 hover:underline block mb-3";
-        a.textContent = `Attachment: ${article.fileURL}`;
-        card.appendChild(a);
-      }
+      reacted.push(emoji);
+      localStorage.setItem(reactedKey, JSON.stringify(reacted));
 
-      // content
-      const content = document.createElement("div");
-      content.className = "prose mb-3";
-      content.innerHTML = parseMarkdown(article.content || "");
-      card.appendChild(content);
-
-      // article actions
-      const actions = document.createElement("div");
-      actions.className = "flex gap-2 mb-4";
-      const replyBtn = document.createElement("button");
-      replyBtn.className = "px-3 py-1 bg-blue-50 text-blue-600 rounded";
-      replyBtn.textContent = "Reply";
-      replyBtn.addEventListener("click", () => {
-        showReplyForm(article.id, null, card, 0);
-      });
-      actions.appendChild(replyBtn);
-
-      const editBtn = document.createElement("button");
-      editBtn.className = "px-3 py-1 bg-gray-50 rounded";
-      editBtn.textContent = "Edit";
-      editBtn.addEventListener("click", () => {
-        // populate form for editing
-        document.getElementById("title").value = article.title || "";
-        document.getElementById("author").value = article.author || "";
-        document.getElementById("content").value = article.content || "";
-        document.getElementById("fileURL").value = article.fileURL || article.coverImage || "";
-        document.getElementById("saveArticleBtn").dataset.editing = article.id;
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-      actions.appendChild(editBtn);
-
-      const delBtn = document.createElement("button");
-      delBtn.className = "px-3 py-1 bg-red-50 text-red-600 rounded";
-      delBtn.textContent = "Delete";
-      delBtn.addEventListener("click", async () => {
-        const pw = prompt("Admin password to delete article:");
-        if (pw !== ADMIN_PASSWORD) { alert("Incorrect password"); return; }
-        const articles = window._articles || await loadAndCacheArticles();
-        const idx = articles.findIndex(a => a.id === article.id);
-        if (idx >= 0) {
-          articles.splice(idx, 1);
-          const ok = await saveArticles(articles);
-          if (ok) loadAndCacheArticles();
-        }
-      });
-      actions.appendChild(delBtn);
-
-      card.appendChild(actions);
-
-      // replies section
-      const repliesRoot = document.createElement("div");
-      repliesRoot.className = "mt-4";
-      const replyHeader = document.createElement("h4");
-      replyHeader.className = "font-semibold mb-2";
-      replyHeader.textContent = `Replies (${(article.replies||[]).length})`;
-      repliesRoot.appendChild(replyHeader);
-
-      const list = document.createElement("div");
-      list.className = "space-y-2";
-
-      if (article.replies && article.replies.length) {
-        for (const r of article.replies) {
-          const rr = renderReply(article.id, r, 0);
-          // render nested replies
-          if (r.replies && r.replies.length) {
-            const nested = document.createElement("div");
-            nested.className = "pl-6 mt-2 space-y-2";
-            for (const nr of r.replies) {
-              nested.appendChild(renderReply(article.id, nr, 1));
-            }
-            rr.appendChild(nested);
-          }
-          list.appendChild(rr);
-        }
-      } else {
-        const noReplies = document.createElement("div");
-        noReplies.className = "text-sm text-gray-500";
-        noReplies.textContent = "No replies yet.";
-        list.appendChild(noReplies);
-      }
-
-      repliesRoot.appendChild(list);
-      card.appendChild(repliesRoot);
-
-      document.getElementById("articlesContainer").appendChild(card);
+      await saveArticles();
+      renderArticles();
     }
-  }
 
-  /* ----------------- Load & Cache (helper) ----------------- */
-  async function loadAndCacheArticles() {
-    const articles = await loadArticles();
-    window._articles = articles;
-    return articles;
-  }
-
-  /* ----------------- Form behavior (Create/Edit) ----------------- */
-  document.getElementById("saveArticleBtn").addEventListener("click", async () => {
-    const title = document.getElementById("title").value.trim();
-    const author = document.getElementById("author").value.trim() || "Anonymous";
-    const content = document.getElementById("content").value.trim();
-    const fileURL = document.getElementById("fileURL").value.trim();
-
-    if (!title || !content) {
-      document.getElementById("formMsg").textContent = "Title and content are required";
-      return;
+    function findArticleById(id) {
+      for (const a of articles) {
+        if (a.id === id) return a;
+        const nested = findReply(a.replies || [], id);
+        if (nested) return a;
+      }
     }
-    document.getElementById("formMsg").textContent = "";
 
-    const articles = window._articles || await loadAndCacheArticles();
+    function findReply(replies, id) {
+      for (const r of replies) {
+        if (r.id === id) return r;
+        const found = findReply(r.replies || [], id);
+        if (found) return found;
+      }
+      return null;
+    }
 
-    const editingId = document.getElementById("saveArticleBtn").dataset.editing;
-    if (editingId) {
-      // update existing
-      const art = findArticleById(articles, editingId);
-      if (!art) {
-        alert("Article not found to edit");
+    async function createArticle() {
+      const title = document.getElementById("title").value.trim();
+      const content = document.getElementById("content").value.trim();
+      const author = document.getElementById("author").value.trim();
+      const cover = document.getElementById("cover").value.trim();
+
+      if (!title || !author || !content) {
+        alert("Please fill all required fields.");
         return;
       }
-      art.title = title;
-      art.author = author;
-      art.content = content;
-      art.coverImage = fileURL || "";
-      art.fileURL = fileURL || "";
-    } else {
-      // create new
+
       const newArticle = {
-        id: idNow("article"),
+        id: "article_" + Date.now(),
         title,
         author,
         content,
-        coverImage: fileURL || "",
-        fileURL: fileURL || "",
+        coverImage: cover,
         timestamp: Date.now(),
         replies: []
       };
+
       articles.unshift(newArticle);
+      await saveArticles();
+      renderArticles();
     }
 
-    const ok = await saveArticles(articles);
-    if (ok) {
-      // clear form
-      document.getElementById("title").value = "";
-      document.getElementById("author").value = "";
-      document.getElementById("content").value = "";
-      document.getElementById("fileURL").value = "";
-      delete document.getElementById("saveArticleBtn").dataset.editing;
-      await loadAndCacheArticles();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  });
-
-  document.getElementById("cancelArticleBtn").addEventListener("click", () => {
-    document.getElementById("title").value = "";
-    document.getElementById("author").value = "";
-    document.getElementById("content").value = "";
-    document.getElementById("fileURL").value = "";
-    delete document.getElementById("saveArticleBtn").dataset.editing;
-    document.getElementById("formMsg").textContent = "";
-  });
-
-  /* ----------------- Cloudinary Upload ----------------- */
-  document.getElementById("uploadFile").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    const status = document.getElementById("uploadStatus");
-    if (!file) return;
-    if (file.size > 50 * 1024 * 1024) {
-      status.textContent = "File too large — maximum is 50 MB.";
-      return;
-    }
-    status.textContent = "Uploading...";
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
-
-    try {
-      // use /auto/upload endpoint which handles many types
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+    async function saveArticles() {
+      // trigger GitHub Action
+      await fetch("https://api.github.com/repos/oeper/odarticles/dispatches", {
         method: "POST",
-        body: formData
+        headers: {
+          "Authorization": "token GITHUB_TOKEN_PLACEHOLDER",
+          "Accept": "application/vnd.github.everest-preview+json"
+        },
+        body: JSON.stringify({
+          event_type: "update-gist",
+          client_payload: {
+            gist_id: GIST_ID,
+            articles: articles,
+            json: JSON.stringify({ gist_id: GIST_ID, articles: articles })
+          }
+        })
       });
-      const data = await res.json();
-      if (data.secure_url) {
-        document.getElementById("fileURL").value = data.secure_url;
-        status.textContent = "Upload successful!";
-      } else {
-        status.textContent = "Upload failed.";
-        console.error(data);
-      }
-    } catch (err) {
-      status.textContent = "Upload error.";
-      console.error(err);
     }
-  });
 
-  /* ----------------- Token UI ----------------- */
-  document.getElementById("tokenButton").addEventListener("click", () => {
-    const current = localStorage.getItem("github_token") || "";
-    const token = prompt("Paste your GitHub token (will be stored locally)", current);
-    if (token === null) return;
-    if (token.trim() === "") {
-      if (confirm("Clear stored token?")) {
-        setToken("");
-        alert("Token cleared.");
-      }
-      return;
-    }
-    setToken(token.trim());
-    alert("Token saved locally. You can now save articles and replies.");
-  });
-
-  // clear local storage keys for token & reactions
-  document.getElementById("clearLocal").addEventListener("click", () => {
-    if (!confirm("Clear local token and reaction state? This will log you out locally.")) return;
-    // remove token
-    setToken("");
-    // remove reaction keys (those matching pattern 'replyId::emoji')
-    for (let key of Object.keys(localStorage)) {
-      if (key.includes("reply_") && key.includes("::")) {
-        localStorage.removeItem(key);
-      }
-    }
-    alert("Local token and reactions cleared.");
-  });
-
-  /* ----------------- Initial load ----------------- */
-  // load on start
-  loadAndCacheArticles();
-
+    loadArticles();
   </script>
 </body>
 </html>
