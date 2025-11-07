@@ -12,16 +12,17 @@
 <body>
   <div id="root"></div>
 
+  <!-- ✅ Load your token safely from a local file -->
+  <script src="token.js"></script>
+
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // ⚙️ CONFIGURATION
     const GIST_ID = "af5b47cde42b507af585e30b7b69418f";
-    const GITHUB_TOKEN = window.GITHUB_TOKEN || ""; // optional now
+    const GITHUB_TOKEN = window.GITHUB_TOKEN || "";
     const ADMIN_PASSWORD =
       "76VRB^vR*%^4ec&%Ex%JY$D5u64DU4Crv65R*B^%&r*^&%BR*^&%RB765E&C^$%WE64#w@#$^Qx2%Q^$@#CE53dD45CD46%&D4^%^&rfcT^f^%TC";
 
-    // Simple Markdown parser
     const parseMarkdown = (md) => {
       let html = md;
       html = html.replace(/^### (.*$)/gim, "<h3 class='text-xl font-semibold mt-4 mb-2'>$1</h3>");
@@ -70,11 +71,9 @@
       };
 
       const saveArticles = async (updatedArticles) => {
-        // 🔧 Removed hard error about missing token
         if (!GITHUB_TOKEN) {
-          console.warn("⚠️ No GitHub token — skipping save (demo mode)");
-          setArticles(updatedArticles.sort((a, b) => b.timestamp - a.timestamp));
-          return true; // pretend success
+          console.warn("⚠️ No GitHub token — changes won't save.");
+          return false;
         }
 
         try {
